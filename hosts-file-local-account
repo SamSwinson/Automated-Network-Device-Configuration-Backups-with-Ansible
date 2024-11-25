@@ -1,0 +1,18 @@
+[Cisco_IOS_Devices]
+<IOS Device Name> ansible_host=<IP>
+
+[Cisco_IOS_Devices:vars]
+ansible_network_os=cisco.ios.ios
+ansible_ssh_port=<port>
+ansible_user=store[inventory_hostname]['user']
+ansible_password=store[inventory_hostname]['pass']
+
+[Cisco_ASA_Devices]
+<Cisco ASA Name> ansible_host=<IP>
+
+[Cisco_ASA_Devices:vars]
+ansible_network_os=asa
+ansible_network_terminal_errors=ignore
+ansible_user=store[inventory_hostname]['user']
+ansible_password=store[inventory_hostname]['pass']
+ansible_become_password=store[inventory_hostname]['enable']
