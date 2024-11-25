@@ -1,1 +1,95 @@
+- name: Create tmp Directory
+  hosts: localhost
+  gather_facts: false
+  
+  tasks:
+    - name: Create tmp Directory
+      ansible.builtin.file:
+        path: /Backups/network-configuration-backup/tmp/
+        state: directory
+      delegate_to: localhost
+      run_once: yes
+      ignore_errors: yes
 
+- name: Backup IOS Configurations
+  hosts: Cisco_IOS_Devices
+  gather_facts: false
+  become: true
+  connection: network_cli
+
+  tasks:
+    - name: Get IOS Device Configuration
+      ios_command:
+        commands: show run
+      register: output_router
+
+    - name: Save IOS Device Configuration
+      copy:
+        content: "{{ output_router.stdout[0] }}"
+        dest: "/Backups/network-configuration-backup/tmp/{{ inventory_hostname }}.txt"
+
+- name: Backup ASA Configurations
+  hosts: Cisco_ASA_Devices
+  gather_facts: false
+  become: true
+  connection: network_cli
+
+  tasks:
+    - name: Get ASA Device Configuration
+      ios_command:
+        commands: show run
+      register: output_router
+
+    - name: Save IOS Device Configuration
+      copy:
+        content: "{{ output_router.stdout[0] }}"
+        dest: "/Backups/network-configuration-backup/tmp/{{ inventory_hostname }}.txt"
+
+
+- name: Backup to Gitlab
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+    - name: Print Date
+      command: "date +%Y%m%d"
+      register: date
+      changed_when: false
+      run_once: yes
+      delegate_to: localhost
+
+    - name: Create Date Directory
+      ansible.builtin.file:
+        path: /Backups/network-configuration-backup/{{ date.stdout }}/
+        state: directory
+      delegate_to: localhost
+      run_once: yes
+      ignore_errors: yes
+
+    - name: Move Items
+      shell: |
+        mv /Backups/network-configuration-backup/tmp/* /Backups/network-configuration-backup/{{ date.stdout }}/
+        rm -fR /Backups/network-configuration-backup/tmp/
+      delegate_to: localhost
+      run_once: yes
+      ignore_errors: yes
+
+    - name: Git Commands
+      shell: |
+        git add .
+        git commit -m "Backup Date {{ date.stdout }}"
+      args:
+        chdir: /Backups/network-configuration-backup
+      delegate_to: localhost
+      run_once: yes
+      ignore_errors: yes
+        
+    - name: Git Push
+      expect:
+        command: git push
+        responses:
+          (?i)Enter passphrase for key '/home/<USER>/.ssh/id_rsa': "{{ SSH_KEY_PASS }}"
+        chdir: /Backups/network-configuration-backup
+      delegate_to: localhost
+      run_once: yes
+un_once: yes
