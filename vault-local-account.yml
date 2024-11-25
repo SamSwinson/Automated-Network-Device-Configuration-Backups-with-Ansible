@@ -1,0 +1,7 @@
+CISCO_USER: <username>
+CISCO_PASS: <password>
+SSH_KEY_PASS: <SSH Key Password>
+
+store:
+  <Cisco ASA Name>:
+    enable: <Enable Password>
